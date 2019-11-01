@@ -1,0 +1,53 @@
+public class AuthService : IAuthService
+    {
+        IHttpClientFactory _httpClientFactory;
+
+        public AuthService(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
+        }
+
+        public async Task<Marz_OwinToken> GetAuthorizationAsync(string extUsername = null)
+        {
+            var httpClient = _httpClientFactory.CreateClient();
+
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var requestData = GetRequestData(extUsername);
+            var requestBody = new FormUrlEncodedContent(requestData);
+
+            var _baseUrl = ConfigHelper.GetAppServiceBase();
+            var uri = new Uri($"{_baseUrl}/token");
+
+            var response = await httpClient.PostAsync(uri, requestBody);
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                return
+                    JsonConvert.DeserializeObject<Marz_OwinToken>(responseContent);
+            }
+            else if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                throw new UnauthorizedAccessException();
+            }
+            else
+            {
+                throw new HttpException((int)response.StatusCode, response.ReasonPhrase);
+            }
+        }
+
+        private IEnumerable<KeyValuePair<string, string>> GetRequestData(string extUsername = null)
+        {
+            var clientName = ConfigHelper.GetAppServiceClientId();
+            var clientSecret = ConfigHelper.GetAppServiceSecret();
+
+            yield return new KeyValuePair<string, string>("grant_type", "password");
+            yield return new KeyValuePair<string, string>("username", extUsername);
+            yield return new KeyValuePair<string, string>("client_id", clientName);
+            yield return new KeyValuePair<string, string>("client_secret", clientSecret);
+
+            yield break;
+        }
+    }
