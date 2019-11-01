@@ -1,0 +1,85 @@
+[HandleError]
+    public class HomeController : Controller
+    {
+        private static ILog _log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        private IAuthService _authService;        
+
+        public HomeController(IAuthService authService)
+        {
+            _authService = authService;
+        }
+
+        public async Task<ActionResult> Index()
+        {
+            if (!string.IsNullOrWhiteSpace(Request?.Url?.LocalPath) &&
+                Request.Url.LocalPath.StartsWith("/home/logout", StringComparison.InvariantCultureIgnoreCase))
+                return LogOut();
+
+            var userName = User is ICasPrincipal
+                ? ((ICasPrincipal)User).MarzAttributes.EmailAddress
+                : User.Identity.Name;
+
+            //var userName = ConfigurationManager.AppSettings["UserName"];
+
+            if (!string.IsNullOrWhiteSpace(userName))
+            {
+                try
+                {
+                    var cdanToken =
+                        await _authService.GetAuthorizationAsync(userName);
+
+                    if (!string.IsNullOrWhiteSpace(appToken?.access_token))
+                    {
+                        ViewBag.Token = appToken.access_token;
+                        return View();
+                    }
+                    else
+                    {
+                        _log.Error($"Auth token retrieval failed for user '{userName}'");
+                        return
+                            new HttpUnauthorizedResult();
+                    }                        
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    _log.Error($"Authorization failed for user '{userName}'", ex);
+                    return
+                        new HttpUnauthorizedResult();
+                }
+            }
+
+            _log.Error($"The user name cannot be determined");
+
+            return
+                new HttpNotFoundResult();
+        }
+
+        public ActionResult LogOut()
+        {
+            FormsAuthentication.SignOut();
+            Session.Clear();
+            Session.RemoveAll();
+            Session.Abandon();
+
+            Response.Cookies.Clear();
+
+            //var formsCookie = new HttpCookie(FormsAuthentication.FormsCookieName, string.Empty);
+            //formsCookie.HttpOnly = true;
+            //formsCookie.Expires = DateTime.Now.AddYears(-1);
+            //Response.Cookies.Add(formsCookie);
+
+            //var sessionStateSection =
+            //    (SessionStateSection)WebConfigurationManager.GetSection("system.web/sessionState");
+            //var sessionCookie = new HttpCookie(sessionStateSection.CookieName, string.Empty);
+            //sessionCookie.Expires = DateTime.Now.AddYears(-1);
+            //Response.Cookies.Add(sessionCookie);
+
+            CasAuthentication.SingleSignOut();
+
+            var logoutUrl =
+                ConfigHelper.GetLogoutUrl();
+            return
+                Redirect(logoutUrl);
+        }
+    }
