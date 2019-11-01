@@ -1,0 +1,27 @@
+ public class BundleConfig
+    {
+        public static void RegisterBundles(BundleCollection bundles)
+        {
+            bundles.IgnoreList.Clear();
+            bundles.Add(new ScriptBundle("~/bundles/scr").Include(
+                "~/ClientApp/dist/runtime*",
+                "~/ClientApp/dist/es2015-polyfills*",
+                "~/ClientApp/dist/polyfills*",
+                "~/ClientApp/dist/scripts*",
+                #if DEBUG
+                "~/ClientApp/dist/styles*",
+                #endif
+                "~/ClientApp/dist/vendor*",
+                "~/ClientApp/dist/main*"));
+
+#if DEBUG
+            bundles.Add(new StyleBundle("~/bundles/css").Include(
+                "~/ClientApp/src/styles*"));
+            BundleTable.EnableOptimizations = false;
+#else
+            bundles.Add(new StyleBundle("~/bundles/css").Include(
+                "~/ClientApp/dist/styles*"));
+            BundleTable.EnableOptimizations = false;
+#endif
+        }
+    }
