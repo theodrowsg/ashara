@@ -1,0 +1,29 @@
+    [RoutePrefix("api/auth")]
+    public class AuthController : ApiController
+    {
+        IAuthService _authService;
+
+        public AuthController(IAuthService authService)
+        {
+            _authService = authService;
+        }
+
+        [HttpGet]
+        [Route("token")]
+        public async Task<IHttpActionResult> GetToken()
+        {
+            var userName = User is ICasPrincipal
+                ? ((ICasPrincipal)User).MarzAttributes.EmailAddress
+                : User.Identity.Name;
+
+            //var userName = ConfigurationManager.AppSettings["UserName"];
+
+            var cdanToken =
+               await _authService.GetAuthorizationAsync(userName);
+
+            if (!string.IsNullOrWhiteSpace(appToken?.access_token))
+                return Ok(appToken.access_token);
+
+            return Unauthorized();
+        }
+    }
