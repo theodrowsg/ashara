@@ -1,0 +1,47 @@
+
+    public class ConfigHelper
+    {
+        private const string _appServiceBase = "AppServiceBase";
+        private const string _appServiceClientId = "AppServiceClientId";
+        private const string _appServiceSecret = "AppServiceSecret";
+        private const string _logoutUrlKey = "LogoutUrl";
+
+        public static string GetAppServiceBase()
+        {
+            var result = GetStringConfigSetting(_appServiceBase);
+            return result;
+        }
+
+        public static string GetAppServiceClientId()
+        {
+            var configSetting = 
+                GetStringConfigSetting(_appServiceClientId);
+            var result = 
+                MARZEncryptDecrypt.EncryptDecrypt.decrypt(configSetting);
+
+            return result;
+        }
+
+        public static string GetLogoutUrl()
+        {
+            return
+                GetStringConfigSetting(_logoutUrlKey);
+        }
+
+        public static string GetAppServiceSecret()
+        {
+            var configSetting = 
+                GetStringConfigSetting(_appServiceSecret);
+            var result = 
+                MARZEncryptDecrypt.EncryptDecrypt.decrypt(configSetting);
+
+            return result;
+        }
+
+        private static string GetStringConfigSetting(string key)
+        {
+            return !string.IsNullOrWhiteSpace(key)
+                 ? ConfigurationManager.AppSettings[key]
+                 : null;
+        }
+    }
