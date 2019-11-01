@@ -1,0 +1,18 @@
+public class Marz_OwinToken
+    {
+        public DateTime? expiresOnUtc { get; private set; }
+        public string token_type { get; set; }
+        public string access_token { get; set; }
+
+        private string _expires_in;
+        public string expires_in
+        {
+            get { return _expires_in; }
+            set
+            {
+                _expires_in = value;
+                if (value != null)
+                    expiresOnUtc = DateTime.UtcNow.AddSeconds(Int32.Parse(value) - 10); //Subtract 10 seconds from real expiration date to serve as buffer.
+            }
+        }        
+    }
